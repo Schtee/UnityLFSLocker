@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NiceIO;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -10,13 +11,13 @@ namespace GitLFSLocker
         public delegate void LocksUpdatedHandler(Dictionary<string, LockInfo> locks);
         private delegate void CommandCompleteHandler(string output);
 
-        private string _repositoryPath;
+        private NPath _repositoryPath;
         private CommandRunner _commandRunner;
         private IThreadMarshaller _threadMarshaller;
         private object _lock = new object();
-        private Dictionary<string, LockInfo> _locks = new Dictionary<string, LockInfo>();
+        private Dictionary<NPath, LockInfo> _locks = new Dictionary<NPath, LockInfo>();
 
-        public IEnumerable<KeyValuePair<string, LockInfo>> Locks
+        public IEnumerable<KeyValuePair<NPath, LockInfo>> Locks
         {
             get
             {
@@ -33,11 +34,32 @@ namespace GitLFSLocker
         public bool IsBusy => _commandRunner.IsRunning;
         public event LocksUpdatedHandler OnLocksUpdated;
 
-        public LocksTracker(string repositoryPath, IThreadMarshaller threadMarshaller)
+        public LocksTracker(NPath repositoryPath, IThreadMarshaller threadMarshaller)
         {
             _repositoryPath = repositoryPath;
             _threadMarshaller = threadMarshaller;
             _commandRunner = new CommandRunner(_repositoryPath);
+        }
+
+        public bool IsLocked(NPath absolutePath)
+        {
+            NPath relativePath = GetRepositoryRelativePath(absolutePath);
+
+            lock (_lock)
+            {
+                return _locks.ContainsKey(relativePath);
+            }
+        }
+
+        private NPath GetRepositoryRelativePath(NPath absolutePath)
+        {
+            if (!absolutePath.IsChildOf(_repositoryPath))
+            {
+                throw new Exception("Tried to get relative path of file outside repository " + absolutePath);
+            }
+
+            NPath relativePath = absolutePath.RelativeTo(_repositoryPath);
+            return relativePath;
         }
 
         public void Update()
@@ -57,7 +79,7 @@ namespace GitLFSLocker
             {
                 if (exitCode != 0)
                 {
-                    throw new Exception("LFS command failed: " + output);
+                    throw new Exception("LFS command failed: " + error);
                 }
 
                 continuation(output);
@@ -82,32 +104,42 @@ namespace GitLFSLocker
         private void HandleLocksUpdated(string output)
         {
             var allLocks = LocksParser.Parse(output);
-            var locks = allLocks.ToDictionary(x => x.id, x => x);
+            var locks = allLocks.ToDictionary(x => x.path, x => x);
             lock (_lock)
             {
                 _locks = locks;
             }
         }
 
-        public void Unlock(string id)
+        public void Unlock(NPath path)
         {
             lock (_locks)
             {
-                if (!_locks.ContainsKey(id))
+                if (!_locks.ContainsKey(path))
                 {
-                    throw new Exception("Tried to remove lock that didn't exist: " + id);
+                    throw new Exception("Tried to remove lock that didn't exist: " + path);
                 }
             }
 
-            RunCommand("lfs unlock --id=" + id, o => HandleUnlocked(id));
+            RunCommand("lfs unlock " + path, o => HandleUnlocked(path));
         }
 
-        private void HandleUnlocked(string id)
+        private void HandleUnlocked(NPath path)
         {
             lock (_locks)
             {
-                _locks.Remove(id);
+                _locks.Remove(path);
             }
+        }
+
+        public void Lock(NPath path)
+        {
+            RunCommand("lfs lock " + GetRepositoryRelativePath(path), o => HandleLocked(path));
+        }
+
+        private void HandleLocked(NPath path)
+        {
+            Update();
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using NiceIO;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace GitLFSLocker
@@ -30,7 +31,7 @@ namespace GitLFSLocker
                         continue;
                     }
 
-                    locks.Add(new LockInfo { path = components[0], user = components[1], id = idComponents[1] });
+                    locks.Add(new LockInfo { path = components[0].ToNPath(), user = components[1], id = idComponents[1] });
                 }
 
                 return locks;

@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEditor;
+using NiceIO;
 
 namespace GitLFSLocker
 {
@@ -12,8 +13,6 @@ namespace GitLFSLocker
         }
 
         private string _dir = "";
-        private LocksTracker _locksTracker;
-        private UnityEditorThreadMarshaller _threadMarshaller = new UnityEditorThreadMarshaller();
 
         private void OnGUI()
         {
@@ -21,23 +20,23 @@ namespace GitLFSLocker
 
             if (GUILayout.Button("Test"))
             {
-                _locksTracker = new LocksTracker(_dir, _threadMarshaller);
-                _locksTracker.Update();
+                Session.Instance.Start(_dir.ToNPath());
+                Session.Instance.LocksTracker.Update();
             }
 
-            if (_locksTracker == null)
+            if (!Session.Instance.Ready)
             {
-                GUILayout.Label("No locks tracker");
+                GUILayout.Label("Session not ready");
                 return;
             }
 
-            if (_locksTracker.IsBusy)
+            if (Session.Instance.LocksTracker.IsBusy)
             {
                 GUILayout.Label("Updating...");
                 return;
             }
 
-            foreach (var kvp in _locksTracker.Locks)
+            foreach (var kvp in Session.Instance.LocksTracker.Locks)
             {
                 GUILayout.BeginHorizontal("box");
                 GUILayout.Label(kvp.Value.path);
@@ -45,7 +44,7 @@ namespace GitLFSLocker
                 GUILayout.Label(kvp.Value.id);
                 if (GUILayout.Button(EditorGUIUtility.IconContent("LockIcon")))
                 {
-                    _locksTracker.Unlock(kvp.Value.id);
+                    Session.Instance.LocksTracker.Unlock(kvp.Value.path);
                 }
                 GUILayout.EndHorizontal();
             }
