@@ -9,6 +9,7 @@ namespace GitLFSLocker
     class LocksTracker
     {
         public delegate void LocksUpdatedHandler(Dictionary<string, LockInfo> locks);
+        public delegate void StartupCompleteHandler(bool success);
         private delegate void CommandCompleteHandler(string output);
 
         private NPath _repositoryPath;
@@ -39,6 +40,24 @@ namespace GitLFSLocker
             _repositoryPath = repositoryPath;
             _threadMarshaller = threadMarshaller;
             _commandRunner = new CommandRunner(_repositoryPath);
+        }
+
+        public void Start(StartupCompleteHandler callback)
+        {
+            _commandRunner.Run("lfs status", (code, output, error) => HandleStatusCommandComplete(code, output, error, callback));
+        }
+
+        private void HandleStatusCommandComplete(int exitCode, string output, string error, StartupCompleteHandler callback)
+        {
+            if (exitCode == 0)
+            {
+                callback(true);
+            }
+            else
+            {
+                Debug.LogError("lfs status failed: " + error);
+                callback(false);
+            }
         }
 
         public bool IsLocked(NPath absolutePath)
@@ -86,7 +105,7 @@ namespace GitLFSLocker
             }
             catch (Exception e)
             {
-                // marshal exception back to main thread for Unity to handle them
+                // marshal exceptions back to main thread for Unity to handle them
                 _threadMarshaller.Marshal(() => Throw(e));
             }
         }

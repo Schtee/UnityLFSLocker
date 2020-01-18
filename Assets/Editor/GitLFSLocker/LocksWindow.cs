@@ -12,15 +12,13 @@ namespace GitLFSLocker
             GetWindow<LocksWindow>().Show();
         }
 
-        private string _dir = "";
-
         private void OnGUI()
         {
-            _dir = GUILayout.TextField(_dir);
+            Session.Instance.RepositoryPath = GUILayout.TextField(Session.Instance.RepositoryPath);
 
             if (GUILayout.Button("Test"))
             {
-                Session.Instance.Start(_dir.ToNPath());
+                Session.Instance.Start();
                 Session.Instance.LocksTracker.Update();
             }
 
@@ -39,10 +37,12 @@ namespace GitLFSLocker
             foreach (var kvp in Session.Instance.LocksTracker.Locks)
             {
                 GUILayout.BeginHorizontal("box");
-                GUILayout.Label(kvp.Value.path);
-                GUILayout.Label(kvp.Value.user);
-                GUILayout.Label(kvp.Value.id);
-                if (GUILayout.Button(EditorGUIUtility.IconContent("LockIcon")))
+                float viewWidth = EditorGUIUtility.currentViewWidth;
+
+                GUILayout.Label(kvp.Value.path, GUILayout.Width(viewWidth / 4.0f));
+                GUILayout.Label(kvp.Value.user, GUILayout.Width(viewWidth / 4.0f));
+                GUILayout.Label(kvp.Value.id, GUILayout.Width(viewWidth / 4.0f));
+                if (GUILayout.Button(EditorGUIUtility.IconContent("LockIcon"), GUILayout.Width(viewWidth / 4.0f)))
                 {
                     Session.Instance.LocksTracker.Unlock(kvp.Value.path);
                 }

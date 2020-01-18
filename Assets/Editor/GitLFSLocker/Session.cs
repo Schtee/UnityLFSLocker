@@ -8,6 +8,8 @@ namespace GitLFSLocker
     {
         private const string _repositoryPathKey = "GitLFSLockerRepositoryPath";
 
+        public string RepositoryPath;
+
         public LocksTracker LocksTracker { get; private set; }
 
         private static Session _instance;
@@ -27,25 +29,30 @@ namespace GitLFSLocker
 
         public Session()
         {
+            RepositoryPath = EditorPrefs.GetString(_repositoryPathKey);
             Start();
         }
 
-        private void Start()
+        public void Start()
         {
-            string repositoryPath = EditorPrefs.GetString(_repositoryPathKey);
-            Start(repositoryPath);
-        }
-
-        public void Start(string repositoryPath)
-        {
-            if (string.IsNullOrEmpty(repositoryPath))
+            if (string.IsNullOrEmpty(RepositoryPath))
             {
                 Debug.LogWarning("Not starting LFS session: repository path not set");
             }
             else
             {
-                LocksTracker = new LocksTracker(repositoryPath.ToNPath(), new UnityEditorThreadMarshaller());
+                LocksTracker = new LocksTracker(RepositoryPath.ToNPath(), new UnityEditorThreadMarshaller());
+                LocksTracker.Start(HandleStartupComplete);
+            }
+        }
+
+        private void HandleStartupComplete(bool success)
+        {
+            if (success)
+            {
                 Ready = true;
+                EditorApplication.delayCall += () => EditorPrefs.SetString(_repositoryPathKey, RepositoryPath);
+                LocksTracker.Update();
             }
         }
     }
