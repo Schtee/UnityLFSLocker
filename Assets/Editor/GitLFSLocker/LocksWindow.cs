@@ -34,18 +34,38 @@ namespace GitLFSLocker
                 return;
             }
 
+            GUIStyle box = "box";
+            GUIStyle button = "button";
             foreach (var kvp in Session.Instance.LocksTracker.Locks)
             {
-                GUILayout.BeginHorizontal("box");
-                float viewWidth = EditorGUIUtility.currentViewWidth;
+                float viewWidth = EditorGUIUtility.currentViewWidth - box.margin.left - box.margin.right;
+                GUILayout.BeginHorizontal(box, GUILayout.ExpandWidth(true));
 
-                GUILayout.Label(kvp.Value.path, GUILayout.Width(viewWidth / 4.0f));
-                GUILayout.Label(kvp.Value.user, GUILayout.Width(viewWidth / 4.0f));
-                GUILayout.Label(kvp.Value.id, GUILayout.Width(viewWidth / 4.0f));
-                if (GUILayout.Button(EditorGUIUtility.IconContent("LockIcon"), GUILayout.Width(viewWidth / 4.0f)))
+                const float desiredButtonWidth = 24.0f;
+                float buttonWidth = desiredButtonWidth + button.border.left + button.border.right;
+                float infoWidth = viewWidth - buttonWidth * 2;
+                if (GUILayout.Button(EditorGUIUtility.IconContent("d_Project"), GUILayout.Width(desiredButtonWidth), GUILayout.Height(EditorGUIUtility.singleLineHeight)))
+                {
+                    string assetPath = Session.Instance.LocksTracker.RepositoryPathToProjectPath(kvp.Value.path);
+                    Object o = AssetDatabase.LoadAssetAtPath<Object>(assetPath);
+                    if (o == null)
+                    {
+                        Debug.LogWarning("No asset found at " + assetPath);
+                    }
+                    else
+                    {
+                        Selection.activeObject = o;
+                    }
+                }
+                GUILayout.Label(kvp.Value.path, GUILayout.Width(infoWidth / 2.0f));
+                GUILayout.Label(kvp.Value.user, GUILayout.Width(infoWidth / 4.0f));
+                GUILayout.Label(kvp.Value.id, GUILayout.Width(infoWidth / 4.0f));
+                Rect lastRect = GUILayoutUtility.GetLastRect();
+                if (GUILayout.Button(EditorGUIUtility.IconContent("AssemblyLock"), GUILayout.Width(desiredButtonWidth), GUILayout.Height(EditorGUIUtility.singleLineHeight)))
                 {
                     Session.Instance.LocksTracker.Unlock(kvp.Value.path);
                 }
+
                 GUILayout.EndHorizontal();
             }
         }

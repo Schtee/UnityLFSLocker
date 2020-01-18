@@ -70,6 +70,12 @@ namespace GitLFSLocker
             }
         }
 
+        public NPath RepositoryPathToProjectPath(NPath path)
+        {
+            NPath fullPath = _repositoryPath.Combine(path);
+            return fullPath.RelativeTo(Application.dataPath.ToNPath().Parent);
+        }
+
         private NPath GetRepositoryRelativePath(NPath absolutePath)
         {
             if (!absolutePath.IsChildOf(_repositoryPath))
