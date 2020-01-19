@@ -14,7 +14,12 @@ namespace GitLFSLocker
 
         private void OnGUI()
         {
-            Session.Instance.RepositoryPath = GUILayout.TextField(Session.Instance.RepositoryPath);
+            string newUser = EditorGUILayout.TextField("User", Session.Instance.User);
+            if (newUser != Session.Instance.User)
+            {
+                Session.Instance.User = newUser;
+            }
+            Session.Instance.RepositoryPath = EditorGUILayout.TextField("Repo path: ", Session.Instance.RepositoryPath);
 
             if (GUILayout.Button("Test"))
             {

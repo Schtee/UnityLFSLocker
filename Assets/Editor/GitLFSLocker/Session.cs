@@ -7,7 +7,9 @@ namespace GitLFSLocker
     class Session
     {
         private const string _repositoryPathKey = "GitLFSLockerRepositoryPath";
+        private const string _userKey = "GitLFSLockersUser";
 
+        private string _user;
         public string RepositoryPath;
 
         public LocksTracker LocksTracker { get; private set; }
@@ -26,10 +28,20 @@ namespace GitLFSLocker
         }
 
         public bool Ready { get; private set; }
+        public string User
+        {
+            get { return _user; }
+            set
+            {
+                _user = value;
+                EditorPrefs.SetString(_userKey, _user);
+            }
+        }
 
         public Session()
         {
             RepositoryPath = EditorPrefs.GetString(_repositoryPathKey);
+            _user = EditorPrefs.GetString(_userKey);
             Start();
         }
 

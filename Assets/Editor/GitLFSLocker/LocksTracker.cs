@@ -60,6 +60,16 @@ namespace GitLFSLocker
             }
         }
 
+        public bool TryGetLockInfo(NPath absolutePath, out LockInfo lockInfo)
+        {
+            NPath relativePath = GetRepositoryRelativePath(absolutePath);
+
+            lock (_lock)
+            {
+                return _locks.TryGetValue(relativePath, out lockInfo);
+            }
+        }
+
         public bool IsLocked(NPath absolutePath)
         {
             NPath relativePath = GetRepositoryRelativePath(absolutePath);
@@ -134,6 +144,11 @@ namespace GitLFSLocker
             {
                 _locks = locks;
             }
+        }
+
+        public void UnlockAbsolutePath(NPath path)
+        {
+            Unlock(GetRepositoryRelativePath(path));
         }
 
         public void Unlock(NPath path)

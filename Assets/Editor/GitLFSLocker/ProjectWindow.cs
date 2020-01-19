@@ -4,10 +4,51 @@ using UnityEngine;
 
 namespace GitLFSLocker
 {
+    [InitializeOnLoad]
     public class ProjectWindow
     {
         private const string _lockMenuItem = "Assets/LFS Lock";
         private const string _unlockMenuItem = "Assets/LFS Unlock";
+        private static Texture _lockIconTexture;
+
+        private static Texture LockIconTexture
+        {
+            get
+            {
+                if (_lockIconTexture == null)
+                {
+                    _lockIconTexture = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Editor/GitLFSLocker/lockicon.png");
+                }
+                return _lockIconTexture;
+            }
+        }
+
+        static ProjectWindow()
+        {
+            EditorApplication.projectWindowItemOnGUI += ProjectWindowOnGUI;
+        }
+
+        private static void ProjectWindowOnGUI(string guid, Rect selectionRect)
+        {
+            if (!Session.Instance.Ready)
+            {
+                return;
+            }
+
+            NPath assetPath = AssetDatabase.GUIDToAssetPath(guid).ToNPath().MakeAbsolute();
+            LockInfo lockInfo;
+            if (Session.Instance.LocksTracker.TryGetLockInfo(assetPath, out lockInfo))
+            {
+                Rect pos = selectionRect;
+                const float iconWidth = 16.0f;
+                pos.x = pos.width - iconWidth;
+                pos.width = iconWidth;
+                Color oldColor = GUI.color;
+                GUI.color = lockInfo.user == Session.Instance.User ? Color.green : Color.red;
+                GUI.Label(pos, LockIconTexture);
+                GUI.color = oldColor;
+            }
+        }
 
         private static NPath GetFullAssetPath(Object asset)
         {
@@ -61,7 +102,7 @@ namespace GitLFSLocker
             var selected = Selection.objects;
             foreach (var obj in selected)
             {
-                Session.Instance.LocksTracker.Unlock(GetFullAssetPath(obj));
+                Session.Instance.LocksTracker.UnlockAbsolutePath(GetFullAssetPath(obj));
             }
         }
 
