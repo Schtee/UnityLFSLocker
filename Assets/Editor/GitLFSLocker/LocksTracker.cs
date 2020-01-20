@@ -8,9 +8,9 @@ namespace GitLFSLocker
 {
     class LocksTracker
     {
-        public delegate void LocksUpdatedHandler(Dictionary<string, LockInfo> locks);
+        public delegate void LocksUpdatedHandler(IEnumerable<KeyValuePair<NPath, LockInfo>> locks);
         public delegate void StartupCompleteHandler(bool success);
-        private delegate void CommandCompleteHandler(string output);
+        public delegate void CommandCompleteHandler(bool success, string message);
 
         private NPath _repositoryPath;
         private CommandRunner _commandRunner;
@@ -97,27 +97,26 @@ namespace GitLFSLocker
             return relativePath;
         }
 
-        public void Update()
+        public void Update(CommandCompleteHandler handler = null)
         {
-            RunCommand("lfs locks", HandleLocksCommandComplete);
+			RunCommand("lfs locks", HandleLocksCommandComplete, handler);
         }
 
-        private void RunCommand(string command, CommandCompleteHandler continuation)
+        private void RunCommand(string command, CommandCompleteHandler continuation, CommandCompleteHandler externalCallback = null)
         {
             Debug.Log("Running git " + command);
-            _commandRunner.Run(command, (code, o, e) => HandleCommandComplete(code, o, e, continuation));
+            _commandRunner.Run(command, (code, o, e) => HandleCommandComplete(code, o, e, continuation, externalCallback));
         }
 
-        private void HandleCommandComplete(int exitCode, string output, string error, CommandCompleteHandler continuation)
+        private void HandleCommandComplete(int exitCode, string output, string error,
+			CommandCompleteHandler continuation, CommandCompleteHandler externalCallback)
         {
             try
             {
-                if (exitCode != 0)
-                {
-                    throw new Exception("LFS command failed: " + error);
-                }
-
-                continuation(output);
+				bool success = exitCode == 0;
+				string message = success ? output : error;
+                continuation(success, message);
+				externalCallback?.Invoke(success, message);
             }
             catch (Exception e)
             {
@@ -128,11 +127,17 @@ namespace GitLFSLocker
 
         private void Throw(System.Exception e)
         {
-            throw e;
+			Debug.LogException(e);
         }
 
-        private void HandleLocksCommandComplete(string output)
+        private void HandleLocksCommandComplete(bool success, string output)
         {
+			if (!success)
+			{
+				Debug.LogWarning("Failed to get locks: " + output);
+				return;
+			}
+
             HandleLocksUpdated(output);
         }
 
@@ -144,6 +149,7 @@ namespace GitLFSLocker
             {
                 _locks = locks;
             }
+			OnLocksUpdated?.Invoke(Locks);
         }
 
         public void UnlockAbsolutePath(NPath path)
@@ -161,11 +167,17 @@ namespace GitLFSLocker
                 }
             }
 
-            RunCommand("lfs unlock " + path, o => HandleUnlocked(path));
+			RunCommand("lfs unlock " + path, (success, message) => HandleUnlocked(success, message, path));
         }
 
-        private void HandleUnlocked(NPath path)
+        private void HandleUnlocked(bool success, string message, NPath path)
         {
+			if (!success)
+			{
+				Debug.LogError("Failed to unlock " + path + ": " + message);
+				return;
+			}
+
             lock (_locks)
             {
                 _locks.Remove(path);
@@ -174,11 +186,17 @@ namespace GitLFSLocker
 
         public void Lock(NPath path)
         {
-            RunCommand("lfs lock " + GetRepositoryRelativePath(path), o => HandleLocked(path));
+            RunCommand("lfs lock " + GetRepositoryRelativePath(path), (success, message) => HandleLocked(success, message, path));
         }
 
-        private void HandleLocked(NPath path)
+        private void HandleLocked(bool success, string message, NPath path)
         {
+			if (!success)
+			{
+				Debug.LogError("Failed to unlock " + path + ": " + message);
+				return;
+			}
+
             Update();
         }
     }

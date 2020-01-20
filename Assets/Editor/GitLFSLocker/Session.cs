@@ -60,12 +60,34 @@ namespace GitLFSLocker
 
         private void HandleStartupComplete(bool success)
         {
+
             if (success)
             {
                 Ready = true;
                 EditorApplication.delayCall += () => EditorPrefs.SetString(_repositoryPathKey, RepositoryPath);
-                LocksTracker.Update();
+
+				EditorApplication.update += Poll;
             }
         }
+
+		private const float _updateFrequencyInSeconds = 30.0f;
+		private double _nextUpdateTime = 0.0;
+		private void Poll()
+		{
+			void HandleLocksUpdated(bool locksUpdatesSuccess, string message)
+			{
+				EditorApplication.delayCall += () =>
+				{
+					_nextUpdateTime = EditorApplication.timeSinceStartup + _updateFrequencyInSeconds;
+					EditorApplication.delayCall += () => EditorApplication.update += Poll;
+				};
+			}
+
+			if (EditorApplication.timeSinceStartup > _nextUpdateTime)
+			{
+				EditorApplication.update -= Poll;
+				LocksTracker.Update(HandleLocksUpdated);
+			}
+		}
     }
 }
