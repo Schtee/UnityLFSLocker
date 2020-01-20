@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using NiceIO;
+using System.Linq;
 
 namespace GitLFSLocker
 {
@@ -19,7 +20,22 @@ namespace GitLFSLocker
             {
                 Session.Instance.User = newUser;
             }
+
+			GUILayout.BeginHorizontal();
             Session.Instance.RepositoryPath = EditorGUILayout.TextField("Repo path: ", Session.Instance.RepositoryPath);
+			if (GUILayout.Button("Find", GUILayout.Width(50)))
+			{
+				NPath found = FindRepository();
+				if (found == null)
+				{
+					Debug.LogWarning("Couldn't find repository path in parents of " + Application.dataPath);
+				}
+				else
+				{
+					Session.Instance.RepositoryPath = found;
+				}
+			}
+			GUILayout.EndHorizontal();
 
             if (GUILayout.Button("Test"))
             {
@@ -74,5 +90,29 @@ namespace GitLFSLocker
                 GUILayout.EndHorizontal();
             }
         }
+
+		private NPath FindRepository()
+		{
+			bool IsGitFolder(NPath path)
+			{
+				return path.Directories(".git").Any();
+			}
+
+
+			NPath currentPath = Application.dataPath.ToNPath();
+			if (IsGitFolder(currentPath))
+			{
+				return currentPath;
+			}
+			foreach (var parent in currentPath.RecursiveParents)
+			{
+				if (IsGitFolder(parent))
+				{
+					return parent;
+				}
+			}
+
+			return null;
+		}
     }
 }
