@@ -18,7 +18,7 @@ namespace GitLFSLocker
         private object _lock = new object();
         private Dictionary<NPath, LockInfo> _locks = new Dictionary<NPath, LockInfo>();
 
-        public IEnumerable<KeyValuePair<NPath, LockInfo>> Locks
+        public IEnumerable<LockInfo> Locks
         {
             get
             {
@@ -26,14 +26,13 @@ namespace GitLFSLocker
                 {
                     foreach (var kvp in _locks)
                     {
-                        yield return kvp;
+                        yield return kvp.Value;
                     }
                 }
             }
         }
 
         public bool IsBusy => _commandRunner.IsRunning;
-        public event LocksUpdatedHandler OnLocksUpdated;
 
         public LocksTracker(NPath repositoryPath, IThreadMarshaller threadMarshaller)
         {
@@ -99,7 +98,7 @@ namespace GitLFSLocker
 
         public void Update(CommandCompleteHandler handler = null)
         {
-			RunCommand("lfs locks", HandleLocksCommandComplete, handler);
+			RunCommand("lfs locks --json", HandleLocksCommandComplete, handler);
         }
 
         private void RunCommand(string command, CommandCompleteHandler continuation, CommandCompleteHandler externalCallback = null)

@@ -57,7 +57,7 @@ namespace GitLFSLocker
 
             GUIStyle box = "box";
             GUIStyle button = "button";
-            foreach (var kvp in Session.Instance.LocksTracker.Locks)
+            foreach (var l in Session.Instance.LocksTracker.Locks)
             {
                 float viewWidth = EditorGUIUtility.currentViewWidth - box.margin.left - box.margin.right;
                 GUILayout.BeginHorizontal(box, GUILayout.ExpandWidth(true));
@@ -67,7 +67,7 @@ namespace GitLFSLocker
                 float infoWidth = viewWidth - buttonWidth * 2;
                 if (GUILayout.Button(EditorGUIUtility.IconContent("d_Project"), GUILayout.Width(desiredButtonWidth), GUILayout.Height(EditorGUIUtility.singleLineHeight)))
                 {
-                    string assetPath = Session.Instance.LocksTracker.RepositoryPathToProjectPath(kvp.Value.path);
+                    string assetPath = Session.Instance.LocksTracker.RepositoryPathToProjectPath(l.path);
                     Object o = AssetDatabase.LoadAssetAtPath<Object>(assetPath);
                     if (o == null)
                     {
@@ -78,13 +78,12 @@ namespace GitLFSLocker
                         Selection.activeObject = o;
                     }
                 }
-                GUILayout.Label(kvp.Value.path, GUILayout.Width(infoWidth / 2.0f));
-                GUILayout.Label(kvp.Value.user, GUILayout.Width(infoWidth / 4.0f));
-                GUILayout.Label(kvp.Value.id, GUILayout.Width(infoWidth / 4.0f));
-                Rect lastRect = GUILayoutUtility.GetLastRect();
-                if (GUILayout.Button(EditorGUIUtility.IconContent("AssemblyLock"), GUILayout.Width(desiredButtonWidth), GUILayout.Height(EditorGUIUtility.singleLineHeight)))
+                GUILayout.Label(l.path, GUILayout.Width(infoWidth / 2.0f));
+                GUILayout.Label(l.owner.name, GUILayout.Width(infoWidth / 6.0f));
+                GUILayout.Label(l.locked_at.ToString(), GUILayout.Width(infoWidth * 2.0f / 6.0f));
+                if (GUILayout.Button(ProjectWindow.LockIconTexture, GUILayout.Width(desiredButtonWidth), GUILayout.Height(EditorGUIUtility.singleLineHeight)))
                 {
-                    Session.Instance.LocksTracker.Unlock(kvp.Value.path);
+                    Session.Instance.LocksTracker.Unlock(l.path);
                 }
 
                 GUILayout.EndHorizontal();
@@ -93,12 +92,6 @@ namespace GitLFSLocker
 
 		private NPath FindRepository()
 		{
-			bool IsGitFolder(NPath path)
-			{
-				return path.Directories(".git").Any();
-			}
-
-
 			NPath currentPath = Application.dataPath.ToNPath();
 			if (IsGitFolder(currentPath))
 			{
@@ -114,5 +107,10 @@ namespace GitLFSLocker
 
 			return null;
 		}
+
+        private static bool IsGitFolder(NPath path)
+        {
+            return path.Directories(".git").Any();
+        }
     }
 }

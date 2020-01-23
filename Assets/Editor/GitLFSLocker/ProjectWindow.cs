@@ -11,7 +11,7 @@ namespace GitLFSLocker
         private const string _unlockMenuItem = "Assets/LFS Unlock";
         private static Texture _lockIconTexture;
 
-        private static Texture LockIconTexture
+        public static Texture LockIconTexture
         {
             get
             {
@@ -44,7 +44,7 @@ namespace GitLFSLocker
                 pos.x = pos.width - iconWidth;
                 pos.width = iconWidth;
                 Color oldColor = GUI.color;
-                GUI.color = lockInfo.user == Session.Instance.User ? Color.green : Color.red;
+                GUI.color = lockInfo.owner.name == Session.Instance.User ? Color.green : Color.red;
                 GUI.Label(pos, LockIconTexture);
                 GUI.color = oldColor;
             }
