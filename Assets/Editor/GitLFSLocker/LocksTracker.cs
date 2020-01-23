@@ -124,7 +124,7 @@ namespace GitLFSLocker
             }
         }
 
-        private void Throw(System.Exception e)
+        private void Throw(Exception e)
         {
 			Debug.LogException(e);
         }
@@ -148,7 +148,6 @@ namespace GitLFSLocker
             {
                 _locks = locks;
             }
-			OnLocksUpdated?.Invoke(Locks);
         }
 
         public void UnlockAbsolutePath(NPath path)

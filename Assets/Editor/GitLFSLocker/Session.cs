@@ -74,21 +74,21 @@ namespace GitLFSLocker
 		private double _nextUpdateTime = 0.0;
 		private void Poll()
 		{
-			void HandleLocksUpdated(bool locksUpdatesSuccess, string message)
-			{
-				EditorApplication.delayCall += () =>
-				{
-					_nextUpdateTime = EditorApplication.timeSinceStartup + _updateFrequencyInSeconds;
-					EditorApplication.delayCall += () => EditorApplication.update += Poll;
-				};
-			}
-
 			if (EditorApplication.timeSinceStartup > _nextUpdateTime)
 			{
 				EditorApplication.update -= Poll;
 				LocksTracker.Update(HandleLocksUpdated);
 			}
 		}
+
+        private void HandleLocksUpdated(bool locksUpdatesSuccess, string message)
+        {
+            EditorApplication.delayCall += () =>
+            {
+                _nextUpdateTime = EditorApplication.timeSinceStartup + _updateFrequencyInSeconds;
+                EditorApplication.delayCall += () => EditorApplication.update += Poll;
+            };
+        }
 		
         [MenuItem("Git/Clear settings")]
         private static void ClearSettings()
