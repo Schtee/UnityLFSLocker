@@ -25,26 +25,14 @@ namespace GitLFSLocker
                 }
             }
 
-            if (!Session.Instance.Ready)
+            string user;
+            if (!Session.Instance.IsLockedBySomeoneElse(assetPath, out user))
             {
                 message = null;
                 return true;
             }
 
-            LockInfo lockInfo;
-            if (!Session.Instance.LocksTracker.TryGetLockInfo(assetPath.ToNPath().MakeAbsolute(), out lockInfo))
-            {
-                message = null;
-                return true;
-            }
-
-            if (lockInfo.owner.name == Session.Instance.User)
-            {
-                message = null;
-                return true;
-            }
-
-            message = "File is locked by " + lockInfo.owner.name;
+            message = "File is locked by " + user;
             return false;
         }
 
@@ -58,6 +46,12 @@ namespace GitLFSLocker
 
             GUILayout.Label(msg);
             GUI.enabled = false;
+        }
+
+        private static AssetDeleteResult OnWillDeleteAsset(string assetPath, RemoveAssetOptions option)
+        {
+            string user;
+            return Session.Instance.IsLockedBySomeoneElse(assetPath, out user) ? AssetDeleteResult.FailedDelete : AssetDeleteResult.DidNotDelete;
         }
     }
 }

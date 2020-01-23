@@ -90,6 +90,25 @@ namespace GitLFSLocker
                 EditorApplication.delayCall += () => EditorApplication.update += Poll;
             };
         }
+
+        public bool IsLockedBySomeoneElse(string assetPath, out string lockUser)
+        {
+            if (!Ready)
+            {
+                lockUser = null;
+                return false;
+            }
+
+            LockInfo lockInfo;
+            if (!Instance.LocksTracker.TryGetLockInfo(assetPath.ToNPath().MakeAbsolute(), out lockInfo))
+            {
+                lockUser = null;
+                return false;
+            }
+
+            lockUser = lockInfo.owner.name;
+            return lockUser != User;
+        }
 		
         [MenuItem("Git/Clear settings")]
         private static void ClearSettings()
