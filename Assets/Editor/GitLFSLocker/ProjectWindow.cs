@@ -11,7 +11,7 @@ namespace GitLFSLocker
         private const string _unlockMenuItem = "Assets/LFS Unlock";
         private static Texture _lockIconTexture;
 
-        private static Texture LockIconTexture
+        public static Texture LockIconTexture
         {
             get
             {

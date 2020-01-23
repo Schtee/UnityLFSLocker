@@ -79,9 +79,9 @@ namespace GitLFSLocker
                     }
                 }
                 GUILayout.Label(kvp.Value.path, GUILayout.Width(infoWidth / 2.0f));
-                GUILayout.Label(kvp.Value.owner.name, GUILayout.Width(infoWidth / 4.0f));
-                GUILayout.Label(kvp.Value.id, GUILayout.Width(infoWidth / 4.0f));
-                if (GUILayout.Button(EditorGUIUtility.IconContent("AssemblyLock"), GUILayout.Width(desiredButtonWidth), GUILayout.Height(EditorGUIUtility.singleLineHeight)))
+                GUILayout.Label(kvp.Value.owner.name, GUILayout.Width(infoWidth / 6.0f));
+                GUILayout.Label(kvp.Value.locked_at.ToString(), GUILayout.Width(infoWidth * 2.0f / 6.0f));
+                if (GUILayout.Button(ProjectWindow.LockIconTexture, GUILayout.Width(desiredButtonWidth), GUILayout.Height(EditorGUIUtility.singleLineHeight)))
                 {
                     Session.Instance.LocksTracker.Unlock(kvp.Value.path);
                 }
