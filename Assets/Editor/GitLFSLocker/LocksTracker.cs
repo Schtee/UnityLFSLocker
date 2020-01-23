@@ -8,7 +8,6 @@ namespace GitLFSLocker
 {
     class LocksTracker
     {
-        public delegate void LocksUpdatedHandler(Dictionary<string, LockInfo> locks);
         public delegate void StartupCompleteHandler(bool success);
         private delegate void CommandCompleteHandler(string output);
 
@@ -33,7 +32,6 @@ namespace GitLFSLocker
         }
 
         public bool IsBusy => _commandRunner.IsRunning;
-        public event LocksUpdatedHandler OnLocksUpdated;
 
         public LocksTracker(NPath repositoryPath, IThreadMarshaller threadMarshaller)
         {
@@ -99,7 +97,7 @@ namespace GitLFSLocker
 
         public void Update()
         {
-            RunCommand("lfs locks", HandleLocksCommandComplete);
+            RunCommand("lfs locks --json", HandleLocksCommandComplete);
         }
 
         private void RunCommand(string command, CommandCompleteHandler continuation)
@@ -132,11 +130,6 @@ namespace GitLFSLocker
         }
 
         private void HandleLocksCommandComplete(string output)
-        {
-            HandleLocksUpdated(output);
-        }
-
-        private void HandleLocksUpdated(string output)
         {
             var allLocks = LocksParser.Parse(output);
             var locks = allLocks.ToDictionary(x => x.path, x => x);

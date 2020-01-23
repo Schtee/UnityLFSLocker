@@ -79,9 +79,8 @@ namespace GitLFSLocker
                     }
                 }
                 GUILayout.Label(kvp.Value.path, GUILayout.Width(infoWidth / 2.0f));
-                GUILayout.Label(kvp.Value.user, GUILayout.Width(infoWidth / 4.0f));
+                GUILayout.Label(kvp.Value.owner.name, GUILayout.Width(infoWidth / 4.0f));
                 GUILayout.Label(kvp.Value.id, GUILayout.Width(infoWidth / 4.0f));
-                Rect lastRect = GUILayoutUtility.GetLastRect();
                 if (GUILayout.Button(EditorGUIUtility.IconContent("AssemblyLock"), GUILayout.Width(desiredButtonWidth), GUILayout.Height(EditorGUIUtility.singleLineHeight)))
                 {
                     Session.Instance.LocksTracker.Unlock(kvp.Value.path);
@@ -93,12 +92,6 @@ namespace GitLFSLocker
 
 		private NPath FindRepository()
 		{
-			bool IsGitFolder(NPath path)
-			{
-				return path.Directories(".git").Any();
-			}
-
-
 			NPath currentPath = Application.dataPath.ToNPath();
 			if (IsGitFolder(currentPath))
 			{
@@ -114,5 +107,10 @@ namespace GitLFSLocker
 
 			return null;
 		}
+
+        private static bool IsGitFolder(NPath path)
+        {
+            return path.Directories(".git").Any();
+        }
     }
 }

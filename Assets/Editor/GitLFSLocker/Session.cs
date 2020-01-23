@@ -67,5 +67,12 @@ namespace GitLFSLocker
                 LocksTracker.Update();
             }
         }
+
+        [MenuItem("Git/Clear settings")]
+        private static void ClearSettings()
+        {
+            EditorPrefs.DeleteKey(_repositoryPathKey);
+            EditorPrefs.DeleteKey(_userKey);
+        }
     }
 }
