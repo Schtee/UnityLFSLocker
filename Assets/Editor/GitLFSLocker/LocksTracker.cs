@@ -17,7 +17,7 @@ namespace GitLFSLocker
         private object _lock = new object();
         private Dictionary<NPath, LockInfo> _locks = new Dictionary<NPath, LockInfo>();
 
-        public IEnumerable<KeyValuePair<NPath, LockInfo>> Locks
+        public IEnumerable<LockInfo> Locks
         {
             get
             {
@@ -25,7 +25,7 @@ namespace GitLFSLocker
                 {
                     foreach (var kvp in _locks)
                     {
-                        yield return kvp;
+                        yield return kvp.Value;
                     }
                 }
             }
