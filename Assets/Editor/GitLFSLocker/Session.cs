@@ -85,6 +85,7 @@ namespace GitLFSLocker
         {
             EditorApplication.delayCall += () =>
             {
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
                 _nextUpdateTime = EditorApplication.timeSinceStartup + _updateFrequencyInSeconds;
                 EditorApplication.delayCall += () => EditorApplication.update += Poll;
             };
