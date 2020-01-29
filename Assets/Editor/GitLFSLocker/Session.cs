@@ -1,4 +1,5 @@
 ﻿using NiceIO;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -53,9 +54,17 @@ namespace GitLFSLocker
             }
             else
             {
-                LocksTracker = new LocksTracker(RepositoryPath.ToNPath(), new UnityEditorThreadMarshaller());
+                LocksTracker = new LocksTracker(RepositoryPath.ToNPath(), new UnityEditorThreadMarshaller(), HandleLocksUpdated);
                 LocksTracker.Start(HandleStartupComplete);
             }
+        }
+
+        private void HandleLocksUpdated(IEnumerable<LockInfo> locks)
+        {
+            EditorApplication.delayCall += () =>
+            {
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+            };
         }
 
         private void HandleStartupComplete(bool success)
@@ -77,15 +86,19 @@ namespace GitLFSLocker
 			if (EditorApplication.timeSinceStartup > _nextUpdateTime)
 			{
 				EditorApplication.update -= Poll;
-				LocksTracker.Update(HandleLocksUpdated);
+				LocksTracker.Update(HandleLocksUpdatedPoll);
 			}
 		}
 
-        private void HandleLocksUpdated(bool locksUpdatesSuccess, string message)
+        private void HandleLocksUpdatedPoll(bool locksUpdatesSuccess, string message)
         {
+            if (!locksUpdatesSuccess)
+            {
+                return;
+            }
+
             EditorApplication.delayCall += () =>
             {
-                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
                 _nextUpdateTime = EditorApplication.timeSinceStartup + _updateFrequencyInSeconds;
                 EditorApplication.delayCall += () => EditorApplication.update += Poll;
             };

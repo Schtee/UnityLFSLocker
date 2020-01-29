@@ -8,9 +8,12 @@ namespace GitLFSLocker
 {
     class LocksTracker
     {
-        public delegate void LocksUpdatedHandler(IEnumerable<KeyValuePair<NPath, LockInfo>> locks);
+        public delegate void LocksUpdatedHandler(IEnumerable<LockInfo> locks);
         public delegate void StartupCompleteHandler(bool success);
         public delegate void CommandCompleteHandler(bool success, string message);
+
+        // Always called when locks need to be refreshed
+        public event LocksUpdatedHandler OnLocksUpdated;
 
         private NPath _repositoryPath;
         private CommandRunner _commandRunner;
@@ -24,21 +27,35 @@ namespace GitLFSLocker
             {
                 lock (_lock)
                 {
-                    foreach (var kvp in _locks)
-                    {
-                        yield return kvp.Value;
-                    }
+                    return LocksWithoutLock;
+                }
+            }
+        }
+
+        // Can be used in contexts where we already have a lock, e.g. when locks are updated
+        private IEnumerable<LockInfo> LocksWithoutLock
+        {
+            get
+            {
+                foreach (var kvp in _locks)
+                {
+                    yield return kvp.Value;
                 }
             }
         }
 
         public bool IsBusy => _commandRunner.IsRunning;
 
-        public LocksTracker(NPath repositoryPath, IThreadMarshaller threadMarshaller)
+        public LocksTracker(NPath repositoryPath, IThreadMarshaller threadMarshaller, LocksUpdatedHandler onLocksUpdated = null)
         {
             _repositoryPath = repositoryPath;
             _threadMarshaller = threadMarshaller;
             _commandRunner = new CommandRunner(_repositoryPath);
+
+            if (onLocksUpdated != null)
+            {
+                OnLocksUpdated += onLocksUpdated;
+            }
         }
 
         public void Start(StartupCompleteHandler callback)
@@ -147,6 +164,7 @@ namespace GitLFSLocker
             lock (_lock)
             {
                 _locks = locks;
+                OnLocksUpdated(LocksWithoutLock);
             }
         }
 
@@ -179,6 +197,7 @@ namespace GitLFSLocker
             lock (_locks)
             {
                 _locks.Remove(path);
+                OnLocksUpdated(LocksWithoutLock);
             }
         }
 
