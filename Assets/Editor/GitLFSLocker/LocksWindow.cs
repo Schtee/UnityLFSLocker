@@ -37,7 +37,7 @@ namespace GitLFSLocker
 			}
 			GUILayout.EndHorizontal();
 
-            if (GUILayout.Button("Test"))
+            if (!Session.Instance.Ready && GUILayout.Button("Initialize"))
             {
                 Session.Instance.Start();
                 Session.Instance.LocksTracker.Update();
