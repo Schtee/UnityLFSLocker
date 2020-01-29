@@ -44,9 +44,9 @@ namespace GitLFSLocker
 
             gitProcess.WaitForExit();
 
-            callback(gitProcess.ExitCode, output, error);
-
             IsRunning = false;
+
+            callback(gitProcess.ExitCode, output, error);
         }
     }
 }
