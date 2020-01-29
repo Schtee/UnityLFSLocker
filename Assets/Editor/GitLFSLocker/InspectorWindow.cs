@@ -53,5 +53,12 @@ namespace GitLFSLocker
             string user;
             return Session.Instance.IsLockedBySomeoneElse(assetPath, out user) ? AssetDeleteResult.FailedDelete : AssetDeleteResult.DidNotDelete;
         }
+
+        private static AssetMoveResult OnWillMoveAsset(string oldPath, string newPath)
+        {
+            string user;
+            return Session.Instance.IsLockedBySomeoneElse(oldPath, out user) || Session.Instance.IsLockedBySomeoneElse(newPath, out user) ?
+                AssetMoveResult.FailedMove : AssetMoveResult.DidNotMove;
+        }
     }
 }
