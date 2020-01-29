@@ -30,14 +30,19 @@ namespace GitLFSLocker
 
         private static void ProjectWindowOnGUI(string guid, Rect selectionRect)
         {
-            if (!Session.Instance.Ready)
+            if (!Session.Instance.Ready || string.IsNullOrEmpty(guid))
             {
                 return;
             }
 
-            NPath assetPath = AssetDatabase.GUIDToAssetPath(guid).ToNPath().MakeAbsolute();
+            NPath fullPath = GetFullAssetPath(AssetDatabase.GUIDToAssetPath(guid));
+            if (!Session.Instance.LocksTracker.IsPathInsideRepository(fullPath))
+            {
+                return;
+            }
+
             LockInfo lockInfo;
-            if (Session.Instance.LocksTracker.TryGetLockInfo(assetPath, out lockInfo))
+            if (Session.Instance.LocksTracker.TryGetLockInfo(fullPath, out lockInfo))
             {
                 Rect pos = selectionRect;
                 const float iconWidth = 16.0f;
@@ -53,6 +58,11 @@ namespace GitLFSLocker
         private static NPath GetFullAssetPath(Object asset)
         {
             string assetPath = AssetDatabase.GetAssetPath(asset);
+            return GetFullAssetPath(assetPath);
+        }
+
+        private static NPath GetFullAssetPath(string assetPath)
+        {
             if (string.IsNullOrEmpty(assetPath))
             {
                 return null;
