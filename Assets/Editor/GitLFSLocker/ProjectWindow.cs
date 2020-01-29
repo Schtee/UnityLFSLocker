@@ -57,7 +57,9 @@ namespace GitLFSLocker
             {
                 return null;
             }
-            return assetPath.ToNPath().MakeAbsolute();
+
+            string fullPath = System.IO.Path.GetFullPath(assetPath);
+            return fullPath.ToNPath();
         }
 
         [MenuItem(_lockMenuItem, false, 999)]
@@ -83,6 +85,11 @@ namespace GitLFSLocker
             {
                 NPath fullPath = GetFullAssetPath(obj);
                 if (string.IsNullOrEmpty(fullPath))
+                {
+                    return false;
+                }
+
+                if (!Session.Instance.LocksTracker.IsPathInsideRepository(fullPath))
                 {
                     return false;
                 }
@@ -119,6 +126,11 @@ namespace GitLFSLocker
             {
                 NPath fullPath = GetFullAssetPath(obj);
                 if (string.IsNullOrEmpty(fullPath))
+                {
+                    return false;
+                }
+
+                if (!Session.Instance.LocksTracker.IsPathInsideRepository(fullPath))
                 {
                     return false;
                 }

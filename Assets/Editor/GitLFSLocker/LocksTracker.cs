@@ -104,13 +104,18 @@ namespace GitLFSLocker
 
         public NPath GetRepositoryRelativePath(NPath absolutePath)
         {
-            if (!absolutePath.IsChildOf(_repositoryPath))
+            if (!IsPathInsideRepository(absolutePath))
             {
                 throw new Exception("Tried to get relative path of file outside repository " + absolutePath);
             }
 
             NPath relativePath = absolutePath.RelativeTo(_repositoryPath);
             return relativePath;
+        }
+
+        public bool IsPathInsideRepository(NPath absolutePath)
+        {
+            return absolutePath.IsChildOf(_repositoryPath);
         }
 
         public void Update(CommandCompleteHandler handler = null)
