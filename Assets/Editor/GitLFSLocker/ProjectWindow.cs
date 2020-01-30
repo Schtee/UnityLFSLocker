@@ -17,7 +17,7 @@ namespace GitLFSLocker
             {
                 if (_lockIconTexture == null)
                 {
-                    _lockIconTexture = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Editor/GitLFSLocker/lockicon.png");
+                    _lockIconTexture = Resources.Load<Texture2D>("lockicon");
                 }
                 return _lockIconTexture;
             }
