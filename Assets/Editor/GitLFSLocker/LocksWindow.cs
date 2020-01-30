@@ -76,6 +76,7 @@ namespace GitLFSLocker
                     else
                     {
                         Selection.activeObject = o;
+                        EditorGUIUtility.PingObject(o);
                     }
                 }
                 GUILayout.Label(l.path, GUILayout.Width(infoWidth / 2.0f));
