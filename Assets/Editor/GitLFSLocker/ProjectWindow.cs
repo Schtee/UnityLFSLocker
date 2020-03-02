@@ -50,7 +50,9 @@ namespace GitLFSLocker
                 pos.width = iconWidth;
                 Color oldColor = GUI.color;
                 GUI.color = lockInfo.owner.name == Session.Instance.User ? Color.green : Color.red;
-                GUI.Label(pos, LockIconTexture);
+                var content = new GUIContent(LockIconTexture);
+                content.tooltip = "Locked by " + lockInfo.owner.name;
+                GUI.Label(pos, content);
                 GUI.color = oldColor;
             }
         }
