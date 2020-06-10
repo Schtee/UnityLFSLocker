@@ -30,7 +30,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace NiceIO
+namespace NiceIOEditor
 {
 	public class NPath : IEquatable<NPath>, IComparable
 	{
@@ -52,7 +52,7 @@ namespace NiceIO
 			if (path == "/")
 			{
 				_isRelative = false;
-				_elements = new string[] {};
+				_elements = new string[] { };
 			}
 			else
 			{
@@ -140,11 +140,11 @@ namespace NiceIO
 			get
 			{
 				if (_elements.Length == 0)
-					throw new InvalidOperationException ("Parent is called on an empty path");
+					throw new InvalidOperationException("Parent is called on an empty path");
 
-				var newElements = _elements.Take (_elements.Length - 1).ToArray ();
+				var newElements = _elements.Take(_elements.Length - 1).ToArray();
 
-				return new NPath (newElements, _isRelative, _driveLetter);
+				return new NPath(newElements, _isRelative, _driveLetter);
 			}
 		}
 
@@ -208,7 +208,7 @@ namespace NiceIO
 
 		public string FileNameWithoutExtension
 		{
-			get { return Path.GetFileNameWithoutExtension (FileName); }
+			get { return Path.GetFileNameWithoutExtension(FileName); }
 		}
 
 		public IEnumerable<string> Elements
@@ -345,14 +345,14 @@ namespace NiceIO
 			if (p._isRelative != _isRelative)
 				return false;
 
-		    if (!string.Equals(p._driveLetter, _driveLetter, PathStringComparison))
-		        return false;
+			if (!string.Equals(p._driveLetter, _driveLetter, PathStringComparison))
+				return false;
 
 			if (p._elements.Length != _elements.Length)
 				return false;
 
 			for (var i = 0; i != _elements.Length; i++)
-                if (!string.Equals(p._elements[i], _elements[i], PathStringComparison))
+				if (!string.Equals(p._elements[i], _elements[i], PathStringComparison))
 					return false;
 
 			return true;
@@ -482,7 +482,7 @@ namespace NiceIO
 		public NPath CreateDirectory()
 		{
 			ThrowIfRelative();
-			
+
 			if (IsRoot)
 				throw new NotSupportedException("CreateDirectory is not supported on a root level directory because it would be dangerous:" + ToString());
 
@@ -527,22 +527,22 @@ namespace NiceIO
 			if (dest.DirectoryExists())
 				return CopyWithDeterminedDestination(dest.Combine(FileName), fileFilter);
 
-			return CopyWithDeterminedDestination (dest, fileFilter);
+			return CopyWithDeterminedDestination(dest, fileFilter);
 		}
 
 		public NPath MakeAbsolute()
 		{
 			if (!IsRelative)
 				return this;
-			
-			return NPath.CurrentDirectory.Combine (this);
+
+			return NPath.CurrentDirectory.Combine(this);
 		}
 
-		NPath CopyWithDeterminedDestination(NPath absoluteDestination, Func<NPath,bool> fileFilter)
+		NPath CopyWithDeterminedDestination(NPath absoluteDestination, Func<NPath, bool> fileFilter)
 		{
 			if (absoluteDestination.IsRelative)
-				throw new ArgumentException ("absoluteDestination must be absolute");
-			
+				throw new ArgumentException("absoluteDestination must be absolute");
+
 			if (FileExists())
 			{
 				if (!fileFilter(absoluteDestination))
@@ -786,7 +786,7 @@ namespace NiceIO
 				var candidate = this;
 				while (true)
 				{
-					if(candidate.IsEmpty())
+					if (candidate.IsEmpty())
 						yield break;
 
 					candidate = candidate.Parent;
@@ -840,7 +840,7 @@ namespace NiceIO
 			destination.EnsureDirectoryExists();
 			return Files(recurse).Where(fileFilter ?? AlwaysTrue).Select(file => file.Copy(destination.Combine(file.RelativeTo(this)))).ToArray();
 		}
-		
+
 		public IEnumerable<NPath> MoveFiles(NPath destination, bool recurse, Func<NPath, bool> fileFilter = null)
 		{
 			if (IsRoot)
