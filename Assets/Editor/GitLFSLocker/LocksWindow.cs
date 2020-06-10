@@ -118,7 +118,6 @@ namespace GitLFSLocker
 					}
 					else
 					{
-						// Selection.activeObject = o;
 						EditorGUIUtility.PingObject(o);
 					}
 				}
