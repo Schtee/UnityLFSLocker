@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Threading;
 
 namespace GitLFSLocker
@@ -35,18 +36,30 @@ namespace GitLFSLocker
 
 			string output = "";
 			string error = "";
+			int exitCode = 0;
 			gitProcess.OutputDataReceived += (sender, e) => output += e.Data + '\n';
 			gitProcess.ErrorDataReceived += (sender, e) => error += e.Data + '\n';
 
-			gitProcess.Start();
-			gitProcess.BeginOutputReadLine();
-			gitProcess.BeginErrorReadLine();
+			try
+			{
+				gitProcess.Start();
+				gitProcess.BeginOutputReadLine();
+				gitProcess.BeginErrorReadLine();
 
-			gitProcess.WaitForExit();
+				gitProcess.WaitForExit();
+				exitCode = gitProcess.ExitCode;
+			}
+			catch (Exception e)
+			{
+				error = e.Message;
+				exitCode = 1;
+			}
+			finally
+			{
+				IsRunning = false;
 
-			IsRunning = false;
-
-			callback(gitProcess.ExitCode, output, error);
+				callback(exitCode, output, error);
+			}
 		}
 	}
 }
