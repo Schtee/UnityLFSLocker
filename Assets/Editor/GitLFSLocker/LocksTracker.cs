@@ -187,7 +187,7 @@ namespace GitLFSLocker
 					throw new Exception("Tried to remove lock that didn't exist: " + path);
 				}
 			}
-			string command = "lfs unlock " + path;
+			string command = "lfs unlock \"" + path + "\"";
 			if(useForce)
 			{
 				command += " --force";
@@ -212,7 +212,7 @@ namespace GitLFSLocker
 
 		public void Lock(NPath path)
 		{
-			RunCommand("lfs lock " + GetRepositoryRelativePath(path), (success, message) => HandleLocked(success, message, path));
+			RunCommand("lfs lock \"" + GetRepositoryRelativePath(path) + "\"", (success, message) => HandleLocked(success, message, path));
 		}
 
 		private void HandleLocked(bool success, string message, NPath path)
