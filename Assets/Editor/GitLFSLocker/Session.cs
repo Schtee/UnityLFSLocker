@@ -1,5 +1,6 @@
 ﻿using NiceIOEditor;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEditor;
 using UnityEngine;
 
@@ -7,15 +8,10 @@ namespace GitLFSLocker
 {
 	class Session
 	{
-		private readonly static string _repositoryPathKey = Application.unityVersion + "GitLFSLockerRepositoryPath";
-		private readonly static string _useForceUnlock = Application.unityVersion + "GitLFSLockerUseForceUnlock";
-		private readonly static string _userKey = Application.unityVersion + "GitLFSLockersUser";
-
-		private string _user;
-		public bool ForceUnlock = false;
-		public string RepositoryPath;
-
 		public LocksTracker LocksTracker { get; private set; }
+
+		private LFSLockerConfig _config;
+		private string _user;
 
 		private static Session _instance;
 		public static Session Instance
@@ -31,22 +27,48 @@ namespace GitLFSLocker
 		}
 
 		public bool Ready { get; private set; }
+
+
 		public string User
 		{
-			get { return _user; }
+			get => _user;
 			set
 			{
 				_user = value;
-				EditorPrefs.SetString(_userKey, _user);
+				if (_config != null)
+				{
+					_config.User = value;
+					EditorUtility.SetDirty(_config);
+				}
 			}
 		}
 
+		public string RepositoryPath;
+		public bool ForceUnlock;
+
 		public Session()
 		{
-			RepositoryPath = EditorPrefs.GetString(_repositoryPathKey);
-			ForceUnlock = EditorPrefs.GetBool(_useForceUnlock);
-			_user = EditorPrefs.GetString(_userKey);
+			_config = FindConfig();
+			ReadConfig();
 			Start();
+		}
+
+		private LFSLockerConfig FindConfig()
+		{
+			var guids = AssetDatabase.FindAssets("t:" + typeof(LFSLockerConfig).Name);
+			if (guids.Length == 0)
+				return null;
+			var path = AssetDatabase.GUIDToAssetPath(guids[0]);
+			var config = AssetDatabase.LoadAssetAtPath<LFSLockerConfig>(path);
+			return config;
+		}
+
+		private void ReadConfig()
+		{
+			if (_config == null)
+				return;
+			User = _config.User;
+			RepositoryPath = _config.RepositoryPath;
 		}
 
 		public void Start()
@@ -57,7 +79,16 @@ namespace GitLFSLocker
 			}
 			else
 			{
-				LocksTracker = new LocksTracker(RepositoryPath.ToNPath(), new UnityEditorThreadMarshaller(), HandleLocksUpdated);
+				if (_config == null)
+				{
+					_config = ScriptableObject.CreateInstance<LFSLockerConfig>();
+					AssetDatabase.CreateAsset(_config, "Assets/Editor/LFSLockerConfig.asset");
+				}
+				_config.User = User;
+				_config.RepositoryPath = RepositoryPath;
+				EditorUtility.SetDirty(_config);
+
+				LocksTracker = new LocksTracker(_config?.RepositoryPath.ToNPath(), new UnityEditorThreadMarshaller(), HandleLocksUpdated);
 				LocksTracker.Start(HandleStartupComplete);
 			}
 		}
@@ -72,12 +103,10 @@ namespace GitLFSLocker
 
 		private void HandleStartupComplete(bool success)
 		{
-
 			if (success)
 			{
 				Ready = true;
-				EditorApplication.delayCall += () => EditorPrefs.SetString(_repositoryPathKey, RepositoryPath);
-				EditorApplication.delayCall += () => EditorPrefs.SetBool(_useForceUnlock, ForceUnlock);
+				EditorApplication.delayCall += () => AssetDatabase.SaveAssets();
 
 				EditorApplication.update += Poll;
 			}
@@ -124,15 +153,24 @@ namespace GitLFSLocker
 			}
 
 			lockUser = lockInfo.owner.name;
-			return lockUser != User;
+			return lockUser != _config?.User;
 		}
 
 		[MenuItem("Git/Clear settings")]
 		private static void ClearSettings()
 		{
-			EditorPrefs.DeleteKey(_repositoryPathKey);
-			EditorPrefs.DeleteKey(_useForceUnlock);
-			EditorPrefs.DeleteKey(_userKey);
+			if (Instance._config != null)
+			{
+				var path = AssetDatabase.GetAssetPath(Instance._config);
+				Object.DestroyImmediate(Instance._config, true);
+				AssetDatabase.DeleteAsset(path);
+			}
+
+			Instance._config = null;
+			Instance.User = null;
+			Instance.RepositoryPath = null;
+			Instance.ForceUnlock = false;
+			Instance.Ready = false;
 		}
 	}
 }
